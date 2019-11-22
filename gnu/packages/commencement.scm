@@ -2432,17 +2432,8 @@ exec " gcc "/bin/" program
                (sha256
                 (base32
                  "0vlz4x6cgz7h54qq4528q526qlhnsjzbsvgc4iizn76cb0bfanx7")))))
-    (native-inputs `(("binutils" ,binutils-mesboot)
-                     ("libc" ,glibc-mesboot0)
-                     ("gcc" ,gcc-mesboot1)
-                     ("headers" ,mesboot-headers)
-
-                     ("bash" ,%bootstrap-coreutils&co)
-                     ("coreutils" ,%bootstrap-coreutils&co)
-                     ("diffutils" ,diffutils-mesboot)
-                     ("kernel-headers" ,%bootstrap-linux-libre-headers)
-                     ("make" ,make-mesboot)))
-
+    (native-inputs `(("headers" ,mesboot-headers)
+                     ,@(%boot-mesboot3-inputs)))
     (arguments
      (substitute-keyword-arguments (package-arguments glibc-mesboot0)
        ((#:configure-flags configure-flags)
@@ -2457,18 +2448,27 @@ exec " gcc "/bin/" program
             "--with-pthread"
             "--without-cvs"
             "--without-gd"
-            "--enable-add-ons=nptl")))
+            "--enable-add-ons=nptl"
+            ;; avoid: configure: error: confusing output from nm -u
+            "libc_cv_predef_stack_protector=no")))
        ((#:make-flags make-flags)
-        `(let ((bash (assoc-ref %build-inputs "bash")))
-           (list (string-append "SHELL=" bash "/bin/sh")
-                 "install-bootstrap-headers=yes" "install-headers")))
+        '(list "install-bootstrap-headers=yes" "install-headers"))
        ((#:phases phases)
         `(modify-phases ,phases
+           (delete 'apply-boot-patch)
+           (delete 'fixup-configure)
+           (delete 'set-path)
+           (replace 'unpack
+             (lambda* (#:key source #:allow-other-keys)
+               (invoke "tar" "xvf" source)
+               (chdir (string-append "glibc-" ,version))
+               #t))
            (replace 'setenv
              (lambda* (#:key outputs #:allow-other-keys)
                (let* ((out (assoc-ref outputs "out"))
                       (headers (assoc-ref %build-inputs "headers"))
                       (bash (assoc-ref %build-inputs "bash"))
+                      (shell (string-append bash "/bin/bash"))
                       (coreutils (assoc-ref %build-inputs "coreutils"))
                       (libc (assoc-ref %build-inputs "libc"))
                       (gcc (assoc-ref %build-inputs "gcc"))
@@ -2478,28 +2478,25 @@ exec " gcc "/bin/" program
                       (cflags (string-append " -L " (getcwd)
                                              " -L " libc "/lib")))
                  (setenv "libc_cv_friendly_stddef" "yes")
-                 (setenv "CONFIG_SHELL" (string-append bash "/bin/sh"))
-                 (setenv "SHELL" (getenv "CONFIG_SHELL"))
-                 (format (current-error-port) "CONFIG_SHELL=~s\n" (getenv "CONFIG_SHELL"))
-
+                 (setenv "CONFIG_SHELL" shell)
+                 (setenv "SHELL" shell)
                  (setenv "CPP" (string-append gcc "/bin/gcc -E " cppflags))
                  (setenv "CC" (string-append gcc "/bin/gcc " cppflags cflags))
-
+                 (setenv "LD" "gcc")
                  ;; avoid -fstack-protector
                  (setenv "libc_cv_ssp" "false")
                  (substitute* "configure"
                    (("/bin/pwd") (string-append coreutils "/bin/pwd")))
                  (setenv "C_INCLUDE_PATH" (string-append libc "/include"
                                                          headers "/include"))
-                 (setenv "LIBRARY_PATH" (string-append libc "/lib"))
-                 #t)))
+                 (setenv "LIBRARY_PATH" (string-append libc "/lib")))))
            (replace 'install
              (lambda* (#:key outputs make-flags #:allow-other-keys)
                (let ((kernel-headers (assoc-ref %build-inputs "kernel-headers"))
                      (out (assoc-ref outputs "out")))
-                 (apply invoke "make" make-flags)
-                 (copy-recursively kernel-headers out)
-                 #t)))
+                 (and (apply invoke "make" make-flags)
+                      (copy-recursively kernel-headers out)
+                      #t))))
            (replace 'configure
              (lambda* (#:key configure-flags #:allow-other-keys)
                (format (current-error-port) "running ../configure ~a\n" (string-join configure-flags))
@@ -2508,18 +2505,28 @@ exec " gcc "/bin/" program
                (apply invoke "../configure" configure-flags)))
            (add-after 'configure 'remove-sunrpc
              (lambda _
-               (invoke "make" (string-append (getcwd) "/sysd-sorted" )
-                       (string-append "SHELL=" (getenv "CONFIG_SHELL")))
-               (substitute* "sysd-sorted"
-                 ((" sunrpc") " ")
-                 ((" nis") " "))
-               ;; 'rpcgen' needs native libc headers to be built.
-               (substitute* "../Makefile"
-                 (("^SHELL := /bin/sh") (string-append "SHELL := " (getenv "CONFIG_SHELL"))))
-               (substitute* "../Makeconfig"
-                 (("^SHELL := /bin/sh") (string-append "SHELL := " (getenv "CONFIG_SHELL"))))
-               (substitute* "../elf/Makefile"
-                 (("^SHELL := /bin/sh") (string-append "SHELL := " (getenv "CONFIG_SHELL"))))))))))))
+               (let* ((out (assoc-ref %outputs "out"))
+                      (bash (assoc-ref %build-inputs "bash"))
+                      (shell (string-append bash "/bin/bash")))
+
+                 (let ((Makefile (open-file "Makefile" "a")))
+                   (display (string-append "
+
+SHELL := " shell "
+")
+                            Makefile)
+                   (close Makefile))
+                 (substitute* "../Makefile"
+                   (("^SHELL := /bin/sh") (string-append "SHELL := " shell)))
+                 (substitute* "../Makeconfig"
+                   (("^SHELL := /bin/sh") (string-append "SHELL := " shell)))
+                 (substitute* "../elf/Makefile"
+                   (("^SHELL := /bin/sh") (string-append "SHELL := " shell)))
+                 (invoke "make" (string-append (getcwd) "/sysd-sorted" ))
+                 (substitute* "sysd-sorted"
+                   ((" sunrpc") " ")
+                   ((" nis") " "))
+                 #t)))))))))
 
 (define glibc-mesboot
   (package
