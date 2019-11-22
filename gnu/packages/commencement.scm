@@ -2577,16 +2577,10 @@ exec " gcc "/bin/" program
     (name "gcc-mesboot")
     (version "4.9.4")
     (source (bootstrap-origin (package-source gcc-4.9)))
-    (native-inputs `(("binutils" ,binutils-mesboot)
-                     ("gcc-wrapper" ,gcc-mesboot1-wrapper)
+    (native-inputs `(("gcc-wrapper" ,gcc-mesboot1-wrapper)
                      ("gcc" ,gcc-mesboot1)
-                     ("libc" ,glibc-mesboot)
-
-                     ("bash" ,%bootstrap-coreutils&co)
-                     ("coreutils" ,%bootstrap-coreutils&co)
-                     ("diffutils" ,diffutils-mesboot)
-                     ("kernel-headers" ,%bootstrap-linux-libre-headers)
-                     ("make" ,make-mesboot)))
+                     ("headers" ,glibc-headers-mesboot)
+                     ,@(%boot-mesboot4-inputs)))
     (arguments
      `(#:validate-runpath? #f
        ,@(substitute-keyword-arguments (package-arguments gcc-mesboot1)
@@ -2631,6 +2625,9 @@ exec " gcc "/bin/" program
                      "--disable-build-with-cxx")))
            ((#:phases phases)
             `(modify-phases ,phases
+               (delete 'apply-boot-patch)
+               (delete 'unpack-g++)     ; sadly, gcc-4.9.4 does not provide
+                                        ; modular core/language downloads
                (replace 'setenv
                  (lambda* (#:key outputs #:allow-other-keys)
                    (let* ((out (assoc-ref outputs "out"))
@@ -2641,12 +2638,12 @@ exec " gcc "/bin/" program
                           (kernel-headers (assoc-ref %build-inputs "kernel-headers")))
                      (setenv "CONFIG_SHELL" (string-append bash "/bin/sh"))
                      (setenv "C_INCLUDE_PATH" (string-append
-                                               gcc "/lib/gcc-lib/i686-unknown-linux-gnu/4.7.4/include"
+                                               gcc "/lib/gcc-lib/i686-unknown-linux-gnu/4.6.4/include"
                                                ":" kernel-headers "/include"
                                                ":" glibc "/include"
                                                ":" (getcwd) "/mpfr/src"))
                      (setenv "CPLUS_INCLUDE_PATH" (string-append
-                                                   gcc "/lib/gcc-lib/i686-unknown-linux-gnu/4.7.4/include"
+                                                   gcc "/lib/gcc-lib/i686-unknown-linux-gnu/4.6.4/include"
                                                    ":" kernel-headers "/include"
                                                    ":" glibc "/include"
                                                    ":" (getcwd) "/mpfr/src"))
