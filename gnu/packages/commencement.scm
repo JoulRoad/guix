@@ -3925,9 +3925,10 @@ COREUTILS-FINAL vs. COREUTILS, etc."
       (license (package-license gcc))
       (synopsis "Complete GCC tool chain for C/C++ development")
       (description
-       "This package provides a complete GCC tool chain for C/C++ development to
-be   installed in user profiles.  This includes GCC, as well as libc (headers
-an  d binaries, plus debugging symbols in the @code{debug} output), and Binutils.")
+       "This package provides a complete GCC tool chain for C/C++ development
+to be installed in user profiles.  This includes GCC, as well as libc (headers
+and binaries, plus debugging symbols in the @code{debug} output), and
+Binutils.")
       (home-page "https://gcc.gnu.org/")
       (outputs '("out" "debug" "static"))
 
