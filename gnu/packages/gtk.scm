@@ -552,7 +552,7 @@ in the GNOME project.")
 (define-public at-spi2-core
   (package
    (name "at-spi2-core")
-   (version "2.32.1")
+   (version "2.34.0")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnome/sources/" name "/"
@@ -560,7 +560,7 @@ in the GNOME project.")
                                 name "-" version ".tar.xz"))
             (sha256
              (base32
-              "0lqd7gsl471v6538iighkvb21gjglcb9pklvas32rjpsxcvsjaiw"))))
+              "1ihixwhh3c16q6253qj9gf69741rb2pi51822a4rylsfcyywsafn"))))
    (build-system meson-build-system)
    (outputs '("out" "doc"))
    (arguments
@@ -573,7 +573,9 @@ in the GNOME project.")
             ;; Ensure that the cross-references point to the "doc" output.
             (substitute* "doc/libatspi/meson.build"
               (("docpath =.*")
-               (string-append "docpath = '" (assoc-ref outputs "doc") "/share/gtk-doc/html'\n")))
+               (string-append "docpath = '"
+                              (assoc-ref outputs "doc")
+                              "/share/gtk-doc/html'\n")))
             #t))
         (add-before 'install 'prepare-doc-directory
           (lambda* (#:key outputs #:allow-other-keys)
@@ -616,7 +618,7 @@ in the GNOME project.")
     "The Assistive Technology Service Provider Interface, core components,
 is part of the GNOME accessibility project.")
    (license license:lgpl2.0+)
-   (home-page "https://projects.gnome.org/accessibility/")))
+   (home-page "https://wiki.gnome.org/Accessibility")))
 
 (define-public at-spi2-atk
   (package
