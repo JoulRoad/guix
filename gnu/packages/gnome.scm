@@ -1230,7 +1230,7 @@ some form of information without getting in the user's way.")
 (define-public libpeas
   (package
     (name "libpeas")
-    (version "1.22.0")
+    (version "1.24.1")
     (source
      (origin
       (method url-fetch)
@@ -1239,8 +1239,17 @@ some form of information without getting in the user's way.")
                           name "-" version ".tar.xz"))
       (sha256
        (base32
-        "0qm908kisyjzjxvygdl18hjqxvvgkq9w0phs2g55pck277sw0bsv"))))
-    (build-system gnu-build-system)
+        "1162dr7smmfb02czmhshr0f93hqj7w0nw29bys5lzfvwarxcyflw"))))
+    (build-system meson-build-system)
+    (arguments
+     '(#:phases
+       (modify-phases %standard-phases
+         (add-before 'check 'pre-check
+           (lambda _
+             ;; The test suite requires a running X server.
+             (system "Xvfb :1 &")
+             (setenv "DISPLAY" ":1")
+             #t)))))
     (inputs
      `(("gtk+" ,gtk+)
        ("glade" ,glade3)
@@ -1250,11 +1259,12 @@ some form of information without getting in the user's way.")
      `(("pkg-config" ,pkg-config)
        ("glib:bin" ,glib "bin")
        ("gobject-introspection" ,gobject-introspection)
-       ("intltool" ,intltool)))
+       ("intltool" ,intltool)
+       ("xorg-server" ,xorg-server-for-tests)))
     (propagated-inputs
      ;; The .pc file "Requires" gobject-introspection.
      `(("gobject-introspection" ,gobject-introspection)))
-    (home-page "https://wiki.gnome.org/Libpeas")
+    (home-page "https://wiki.gnome.org/Projects/Libpeas")
     (synopsis "GObject plugin system")
     (description
      "Libpeas is a gobject-based plugin engine, targeted at giving every
