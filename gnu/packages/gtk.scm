@@ -623,7 +623,7 @@ is part of the GNOME accessibility project.")
 (define-public at-spi2-atk
   (package
    (name "at-spi2-atk")
-   (version "2.32.0")
+   (version "2.34.1")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnome/sources/" name "/"
@@ -631,7 +631,7 @@ is part of the GNOME accessibility project.")
                                 name "-" version ".tar.xz"))
             (sha256
              (base32
-              "0p54wx6f6q7s8w0b1j0sgw87pikllp79q5g3lfiwqazs779ycl8b"))))
+              "05ncp7s5nddjinffs26mcvpbd63vk1m3cv5y530p3plgfhqgjvbp"))))
    (build-system meson-build-system)
    (arguments
     '(#:phases
@@ -655,7 +655,7 @@ is part of the GNOME accessibility project.")
     "The Assistive Technology Service Provider Interface
 is part of the GNOME accessibility project.")
    (license license:lgpl2.0+)
-   (home-page "https://projects.gnome.org/accessibility/")))
+   (home-page "https://wiki.gnome.org/Accessibility")))
 
 (define-public gtk+-2
   (package
