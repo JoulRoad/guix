@@ -1600,25 +1600,10 @@ BASH = ")))
 
                ;; ../sysdeps/generic/uname.c:25: config-name.h: error 02
                (substitute* "sysdeps/unix/make-syscalls.sh"
-                 (("#!/gnu/store.*/bin/bash") (string-append "#! " shell)))
-
-               (copy-file "sysdeps/unix/Makefile" "sysdeps/unix/Makefile.orig")
-               (substitute* "sysdeps/unix/Makefile"
-                 (("	  [{] [$][(]SHELL[)]") (string-append "	  { " shell)))
-
-               (system* "make" (string-append "SHELL=" shell) "sysd-syscalls")
-               (rename-file "sysd-syscalls" "sysd-syscalls-bash")
-
-               ;; ../sysdeps/generic/uname.c:25: config-name.h: error 02
-               (substitute* "sysdeps/unix/make-syscalls.sh"
                  (("#!/gnu/store.*/bin/bash") (string-append "#! " gash)))
 
-               (copy-file "sysdeps/unix/Makefile.orig" "sysdeps/unix/Makefile")
                (substitute* "sysdeps/unix/Makefile"
-                 (("	  [{] [$][(]SHELL[)]") (string-append "	  { " gash)))
-
-               (system* "make" (string-append "SHELL=" gash) "sysd-syscalls")
-               (rename-file "sysd-syscalls" "sysd-syscalls-gash"))
+                 (("	  [{] [$][(]SHELL[)]") (string-append "	  { " gash))))
              #t)))))
     (native-search-paths
      ;; Use the language-specific variables rather than 'CPATH' because they
