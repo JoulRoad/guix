@@ -1740,7 +1740,8 @@ from forcing GEXP-PROMISE."
     (source librsvg-next-source)
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags
+     `(#:tests? #f
+       #:configure-flags
        (list "--disable-static"
              "--enable-vala") ; needed for e.g. gnome-mines
        #:make-flags '("CC=gcc")
